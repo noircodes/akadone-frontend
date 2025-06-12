@@ -30,13 +30,16 @@
     "chart.js": "^4.4.7",
     "classnames": "^2.5.1",
     "core-js": "^3.40.0",
+    "moment": "^2.30.1",
     "prop-types": "^15.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.1.5",
+    "react-select": "^5.10.1",
     "redux": "5.0.1",
-    "simplebar-react": "^3.3.0"
+    "simplebar-react": "^3.3.0",
+    "use-debounce": "^10.0.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
