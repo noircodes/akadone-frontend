@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   CTable,
   CTableHead,
@@ -22,33 +22,33 @@ import {
   CFormLabel,
   CFormSelect,
   CModalFooter,
-} from '@coreui/react';
-import moment from 'moment';
-import { useDebounce } from 'use-debounce';
-import { fetchWithAuth } from '../../../Api';
-import { useNavigate } from 'react-router-dom';
-import CIcon from '@coreui/icons-react';
-import { cilArrowBottom, cilArrowTop, cilPencil, cilTrash } from '@coreui/icons';
-import Select from 'react-select';
+} from '@coreui/react'
+import moment from 'moment'
+import { useDebounce } from 'use-debounce'
+import { fetchWithAuth } from '../../../Api'
+import { useNavigate } from 'react-router-dom'
+import CIcon from '@coreui/icons-react'
+import { cilArrowBottom, cilArrowTop, cilPencil, cilTrash } from '@coreui/icons'
+import Select from 'react-select'
 
-const Admin = () => {
-  const [users, setUsers] = useState([]);
-  const [page, setPage] = useState(1);
-  const [size, setSize] = useState(10);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [sortBy, setSortBy] = useState('username');
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [search, setSearch] = useState('');
-  const [departments, setDepartments] = useState([]);
-  const [searchDepartment, setSearchDepartment] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState(null);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+const Student = () => {
+  const [users, setUsers] = useState([])
+  const [page, setPage] = useState(1)
+  const [size, setSize] = useState(10)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalElements, setTotalElements] = useState(0)
+  const [sortBy, setSortBy] = useState('username')
+  const [sortOrder, setSortOrder] = useState('asc')
+  const [search, setSearch] = useState('')
+  const [courses, setCourses] = useState([])
+  const [searchCourses, setSearchCourses] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [modalVisible, setModalVisible] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState(null)
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [userToDelete, setUserToDelete] = useState(null)
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -59,123 +59,110 @@ const Admin = () => {
     noId: '',
     gender: '',
     permissions: [],
-    role: '',
-    managedDepartments: [],
-  });
-  const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState('');
+    program: '',
+    yearEnrolled: 0,
+    enrolledCourses: [],
+  })
+  const [formError, setFormError] = useState('')
+  const [formSuccess, setFormSuccess] = useState('')
 
-  const navigate = useNavigate();
-  const [debouncedSearch] = useDebounce(search, 500);
+  const navigate = useNavigate()
+  const [debouncedSearch] = useDebounce(search, 500)
 
   // Available permissions for React Select
   const permissionOptions = [
     { value: 'read', label: 'Read' },
     { value: 'write', label: 'Write' },
     { value: 'admin', label: 'Admin' },
-  ];
-
-  // Transform departments from API to React Select options
-  const departmentOptions = departments.map((department) => ({
-    value: department._id,
-    label: `${department.name} - ${department.code}`,
-  }));
+  ]
 
   // Transform formData.permissions for React Select
   const selectedPermissions = formData.permissions.map((perm) => ({
     value: perm,
     label: perm.charAt(0).toUpperCase() + perm.slice(1),
-  }));
-
-  // Transform formData.managedDepartments for React Select
-  const selectedDepartments = formData.managedDepartments.map((id) =>
-    departmentOptions.find((option) => option.value === id) || {
-      value: id,
-      label: id,
-    }
-  );
+  }))
 
   const fetchUsers = async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true)
+    setError('')
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/admin/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
+        `http://localhost:8000/api/v1/akadone/admin/student/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         },
-        navigate
-      );
+        navigate,
+      )
       if (response.ok) {
-        const data = await response.json();
-        setUsers(data.items || []);
-        let totalPages = Math.ceil(data.total / size);
-        setTotalPages(totalPages || 0);
-        setTotalElements(data.total || 0);
+        const data = await response.json()
+        setUsers(data.items || [])
+        let totalPages = Math.ceil(data.total / size)
+        setTotalPages(totalPages || 0)
+        setTotalElements(data.total || 0)
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to fetch users');
+        const errorData = await response.json()
+        setError(errorData.message || 'Failed to fetch users')
       }
     } catch (err) {
-      setError('Network error. Please try again later.');
-      console.error('Fetch error:', err);
+      setError('Network error. Please try again later.')
+      console.error('Fetch error:', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const fetchDepartments = async () => {
+  const fetchCourses = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/combo/department?name=${encodeURIComponent(searchDepartment)}`,
+        `http://localhost:8000/api/v1/akadone/combo/course?name=${encodeURIComponent(searchCourses)}`,
         {},
-        navigate
-      );
+        navigate,
+      )
       if (response.ok) {
-        const data = await response.json();
-        setDepartments(data || []);
+        const data = await response.json()
+        setCourses(data || [])
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to fetch departments');
+        const errorData = await response.json()
+        setError(errorData.message || 'Failed to fetch course')
       }
     } catch (err) {
-      setError('Network error. Please try again later.');
-      console.error('Fetch error:', err);
+      setError('Network error. Please try again later.')
+      console.error('Fetch error:', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchUsers();
-  }, [page, size, sortBy, sortOrder, debouncedSearch]);
+    fetchUsers()
+  }, [page, size, sortBy, sortOrder, debouncedSearch])
 
   useEffect(() => {
-    fetchDepartments();
-  }, [searchDepartment]);
+    fetchCourses()
+  }, [searchCourses])
 
   const handleSort = (column) => {
     if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
     } else {
-      setSortBy(column);
-      setSortOrder('asc');
+      setSortBy(column)
+      setSortOrder('asc')
     }
-    setPage(1);
-  };
+    setPage(1)
+  }
 
   const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(1);
-  };
+    setSearch(e.target.value)
+    setPage(1)
+  }
 
   const handleAddUser = () => {
-    setModalVisible(true);
-    setIsEditMode(false);
-    setFormError('');
-    setFormSuccess('');
+    setModalVisible(true)
+    setIsEditMode(false)
+    setFormError('')
+    setFormSuccess('')
     setFormData({
       username: '',
       password: '',
@@ -186,17 +173,18 @@ const Admin = () => {
       noId: '',
       gender: '',
       permissions: [],
-      role: '',
-      managedDepartments: [],
-    });
-  };
+      program: '',
+      yearEnrolled: 0,
+      enrolledCourses: [],
+    })
+  }
 
   const handleEditUser = (user) => {
-    setModalVisible(true);
-    setIsEditMode(true);
-    setCurrentUserId(user._id);
-    setFormError('');
-    setFormSuccess('');
+    setModalVisible(true)
+    setIsEditMode(true)
+    setCurrentUserId(user._id)
+    setFormError('')
+    setFormSuccess('')
     setFormData({
       username: user.username || '',
       password: '', // Password is not retrieved for security
@@ -207,94 +195,105 @@ const Admin = () => {
       noId: user.noId || '',
       gender: user.gender || '',
       permissions: user.permissions || [],
-      role: user.role || '',
-      managedDepartments: user.managedDepartments || [],
-    });
-  };
+      program: user.program || '',
+      yearEnrolled: user.yearEnrolled || 0,
+      enrolledCourses: user.enrolledCourses || [],
+    })
+  }
 
   const handleDeleteUser = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/admin/delete/${userToDelete}`,
+        `http://localhost:8000/api/v1/akadone/admin/student/delete/${userToDelete}`,
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         },
-        navigate
-      );
+        navigate,
+      )
       if (response.ok) {
-        setFormSuccess('User deleted successfully!');
-        setDeleteModalVisible(false);
-        setUserToDelete(null);
-        fetchUsers();
+        setFormSuccess('User deleted successfully!')
+        setDeleteModalVisible(false)
+        setUserToDelete(null)
+        fetchUsers()
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to delete user');
+        const errorData = await response.json()
+        setError(errorData.message || 'Failed to delete user')
       }
     } catch (err) {
-      setError('Network error. Please try again later.');
-      console.error('Delete error:', err);
+      setError('Network error. Please try again later.')
+      console.error('Delete error:', err)
     }
-  };
+  }
 
   const handleOpenDeleteModal = (userId) => {
-    setUserToDelete(userId);
-    setDeleteModalVisible(true);
-  };
+    setUserToDelete(userId)
+    setDeleteModalVisible(true)
+  }
 
   // Handle form changes for inputs and selects
   const handleFormChange = (e, field) => {
     if (field === 'permissions') {
       // Handle React Select for permissions
-      const selected = e ? e.map((option) => option.value) : [];
-      setFormData((prev) => ({ ...prev, permissions: selected }));
+      const selected = e ? e.map((option) => option.value) : []
+      setFormData((prev) => ({ ...prev, permissions: selected }))
     } else {
       // Handle standard inputs and CFormSelect
-      const { name, value } = e.target;
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      const { name, value } = e.target
+      setFormData((prev) => ({ ...prev, [name]: value }))
     }
-  };
+  }
 
   // Handle React Select for managedDepartments
-  const handleDepartmentChange = (selectedOptions) => {
-    const newDepartments = selectedOptions ? selectedOptions.map((option) => option.value) : [];
+  const handleCourseChange = (selectedOptions) => {
+    const newCourses = selectedOptions ? selectedOptions.map((option) => option.value) : []
     setFormData((prev) => ({
       ...prev,
-      managedDepartments: newDepartments,
-    }));
-  };
+      enrolledCourses: newCourses,
+    }))
+  }
+
+  const courseOptions = courses.map((course) => ({
+    value: course._id,
+    label: course.title,
+  }));
+
+  const selectedCourses = formData.enrolledCourses.map((id) =>
+    courseOptions.find((option) => option.value === id) || {
+      value: id,
+      label: id,
+    }
+  );
 
   const validateForm = () => {
-    if (!formData.username) return 'Username is required';
-    if (!isEditMode && !formData.password) return 'Password is required';
-    if (!formData.email) return 'Email is required';
-    if (!formData.role) return 'Role is required';
-    return '';
-  };
+    if (!formData.username) return 'Username is required'
+    if (!isEditMode && !formData.password) return 'Password is required'
+    if (!formData.email) return 'Email is required'
+    return ''
+  }
 
   const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setFormError('');
-    setFormSuccess('');
+    e.preventDefault()
+    setFormError('')
+    setFormSuccess('')
 
-    const validationError = validateForm();
+    const validationError = validateForm()
     if (validationError) {
-      setFormError(validationError);
-      return;
+      setFormError(validationError)
+      return
     }
 
     try {
       const url = isEditMode
-        ? `http://localhost:8000/api/v1/akadone/admin/admin/update/${currentUserId}`
-        : 'http://localhost:8000/api/v1/akadone/admin/admin/create';
-      const method = isEditMode ? 'PUT' : 'POST';
-      
+        ? `http://localhost:8000/api/v1/akadone/admin/student/update/${currentUserId}`
+        : 'http://localhost:8000/api/v1/akadone/admin/student/create'
+      const method = isEditMode ? 'PUT' : 'POST'
+
       // Remove password from formData if empty in edit mode
-      const submitData = isEditMode && !formData.password 
-        ? { ...formData, password: undefined }
-        : formData;
+      const submitData =
+        isEditMode && !formData.password ? { ...formData, password: undefined } : formData
 
       const response = await fetchWithAuth(
         url,
@@ -303,37 +302,41 @@ const Admin = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(submitData),
         },
-        navigate
-      );
+        navigate,
+      )
       if (response.ok) {
-        const data = await response.json();
-        setFormSuccess(data.message || isEditMode ? 'User updated successfully!' : 'User created successfully!');
-        setModalVisible(false);
-        fetchUsers();
+        const data = await response.json()
+        setFormSuccess(
+          data.message || isEditMode ? 'User updated successfully!' : 'User created successfully!',
+        )
+        setModalVisible(false)
+        fetchUsers()
       } else {
-        const errorData = await response.json();
-        setFormError(errorData.message || isEditMode ? 'Failed to update user' : 'Failed to create user');
+        const errorData = await response.json()
+        setFormError(
+          errorData.message || isEditMode ? 'Failed to update user' : 'Failed to create user',
+        )
       }
     } catch (err) {
       if (err.message !== 'Unauthorized: Redirecting to login') {
-        setFormError('Network error. Please try again later.');
-        console.error('Submit error:', err);
+        setFormError('Network error. Please try again later.')
+        console.error('Submit error:', err)
       }
     }
-  };
+  }
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
+      setPage(newPage)
     }
-  };
+  }
 
   return (
     <CContainer className="my-4">
       <CRow>
         <CCol md={6}>
           <CFormInput
-            placeholder="Search by username"
+            placeholder="Search by name"
             value={search}
             onChange={handleSearchChange}
             className="mb-3"
@@ -341,7 +344,7 @@ const Admin = () => {
         </CCol>
         <CCol md={6} className="d-flex justify-content-end">
           <CButton color="primary" onClick={handleAddUser} className="mb-3">
-            Add User
+            Add Student
           </CButton>
         </CCol>
       </CRow>
@@ -355,14 +358,38 @@ const Admin = () => {
             <CTableHead>
               <CTableRow>
                 <CTableHeaderCell>ID</CTableHeaderCell>
-                <CTableHeaderCell onClick={() => handleSort('fullname')} style={{ cursor: 'pointer' }}>
-                  Fullname {sortBy === 'fullname' && <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />}
+                <CTableHeaderCell
+                  onClick={() => handleSort('fullname')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Fullname{' '}
+                  {sortBy === 'fullname' && (
+                    <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
+                  )}
                 </CTableHeaderCell>
                 <CTableHeaderCell onClick={() => handleSort('email')} style={{ cursor: 'pointer' }}>
-                  Email {sortBy === 'email' && <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />}
+                  Email{' '}
+                  {sortBy === 'email' && (
+                    <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
+                  )}
                 </CTableHeaderCell>
-                <CTableHeaderCell onClick={() => handleSort('lastLogin')} style={{ cursor: 'pointer' }}>
-                  Last Login {sortBy === 'lastLogin' && <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />}
+                <CTableHeaderCell
+                  onClick={() => handleSort('specialization')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Program{' '}
+                  {sortBy === 'program' && (
+                    <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
+                  )}
+                </CTableHeaderCell>
+                <CTableHeaderCell
+                  onClick={() => handleSort('lastLogin')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Last Login{' '}
+                  {sortBy === 'lastLogin' && (
+                    <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
+                  )}
                 </CTableHeaderCell>
                 <CTableHeaderCell>Action</CTableHeaderCell>
               </CTableRow>
@@ -374,10 +401,13 @@ const Admin = () => {
                     <CTableDataCell>{index + 1 + (page - 1) * size}</CTableDataCell>
                     <CTableDataCell>{user.fullname}</CTableDataCell>
                     <CTableDataCell>{user.email}</CTableDataCell>
+                    <CTableDataCell>{user.program}</CTableDataCell>
                     <CTableDataCell>
                       {user.lastLogin
-                        ? moment(user.lastLogin).utcOffset(14).format("dddd, MMMM Do YYYY, h:mm:ss a")
-                        : ""}
+                        ? moment(user.lastLogin)
+                            .utcOffset(14)
+                            .format('dddd, MMMM Do YYYY, h:mm:ss a')
+                        : ''}
                     </CTableDataCell>
                     <CTableDataCell>
                       <CButton
@@ -400,7 +430,7 @@ const Admin = () => {
                 ))
               ) : (
                 <CTableRow>
-                  <CTableDataCell colSpan="5" className="text-center">
+                  <CTableDataCell colSpan="6" className="text-center">
                     No users found
                   </CTableDataCell>
                 </CTableRow>
@@ -445,7 +475,7 @@ const Admin = () => {
       )}
       <CModal visible={modalVisible} onClose={() => setModalVisible(false)}>
         <CModalHeader>
-          <CModalTitle>{isEditMode ? 'Edit User' : 'Add New User'}</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit Student' : 'Add New Student'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm onSubmit={handleFormSubmit}>
@@ -548,7 +578,7 @@ const Admin = () => {
               </CCol>
             </CRow>
             <CRow>
-              <CCol md={6}>
+              <CCol md={12}>
                 <CFormLabel>Permissions</CFormLabel>
                 <Select
                   isMulti
@@ -560,32 +590,39 @@ const Admin = () => {
                   placeholder="Select permissions..."
                 />
               </CCol>
+            </CRow>
+            <CRow>
               <CCol md={6}>
-                <CFormLabel>Role</CFormLabel>
-                <CFormSelect
-                  name="role"
-                  value={formData.role}
+                <CFormLabel>Program</CFormLabel>
+                <CFormInput
+                  name="program"
+                  value={formData.program}
                   onChange={(e) => handleFormChange(e)}
-                  required
                   className="mb-3"
-                >
-                  <option value="">Select Role</option>
-                  <option value="Admin">Admin</option>
-                  <option value="User">User</option>
-                </CFormSelect>
+                />
+              </CCol>
+              <CCol md={6}>
+                <CFormLabel>Year Enrolled</CFormLabel>
+                <CFormInput
+                  type="number"
+                  name="yearEnrolled"
+                  value={formData.yearEnrolled}
+                  onChange={(e) => handleFormChange(e)}
+                  className="mb-3"
+                />
               </CCol>
             </CRow>
             <CRow>
               <CCol md={12}>
-                <CFormLabel>Managed Departments</CFormLabel>
+                <CFormLabel>Enrolled Courses</CFormLabel>
                 <Select
                   isMulti
-                  name="managedDepartments"
-                  options={departmentOptions}
-                  value={selectedDepartments}
-                  onChange={handleDepartmentChange}
+                  name="enrolledCourses"
+                  options={courseOptions}
+                  value={selectedCourses}
+                  onChange={handleCourseChange}
                   className="mb-3"
-                  placeholder="Select departments..."
+                  placeholder="Select permissions..."
                 />
               </CCol>
             </CRow>
@@ -604,9 +641,7 @@ const Admin = () => {
         <CModalHeader>
           <CModalTitle>Confirm Delete</CModalTitle>
         </CModalHeader>
-        <CModalBody>
-          Are you sure you want to delete this user?
-        </CModalBody>
+        <CModalBody>Are you sure you want to delete this user?</CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setDeleteModalVisible(false)}>
             Cancel
@@ -617,7 +652,7 @@ const Admin = () => {
         </CModalFooter>
       </CModal>
     </CContainer>
-  );
-};
+  )
+}
 
-export default Admin;
+export default Student

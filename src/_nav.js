@@ -37,7 +37,17 @@ const _nav = [
         component: CNavItem,
         name: 'Admin',
         to:'/user/admin',
-      }
+      },
+      {
+        component: CNavItem,
+        name: 'Lecturer',
+        to: '/user/lecturer'
+      },
+      {
+        component: CNavItem,
+        name: 'Student',
+        to: '/user/student'
+      },
     ]
   },
   {

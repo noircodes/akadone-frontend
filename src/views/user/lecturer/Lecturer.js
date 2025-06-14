@@ -31,7 +31,7 @@ import CIcon from '@coreui/icons-react';
 import { cilArrowBottom, cilArrowTop, cilPencil, cilTrash } from '@coreui/icons';
 import Select from 'react-select';
 
-const Admin = () => {
+const Lecturer = () => {
   const [users, setUsers] = useState([]);
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
@@ -59,8 +59,7 @@ const Admin = () => {
     noId: '',
     gender: '',
     permissions: [],
-    role: '',
-    managedDepartments: [],
+    specialization: '',
   });
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
@@ -75,32 +74,18 @@ const Admin = () => {
     { value: 'admin', label: 'Admin' },
   ];
 
-  // Transform departments from API to React Select options
-  const departmentOptions = departments.map((department) => ({
-    value: department._id,
-    label: `${department.name} - ${department.code}`,
-  }));
-
   // Transform formData.permissions for React Select
   const selectedPermissions = formData.permissions.map((perm) => ({
     value: perm,
     label: perm.charAt(0).toUpperCase() + perm.slice(1),
   }));
 
-  // Transform formData.managedDepartments for React Select
-  const selectedDepartments = formData.managedDepartments.map((id) =>
-    departmentOptions.find((option) => option.value === id) || {
-      value: id,
-      label: id,
-    }
-  );
-
   const fetchUsers = async () => {
     setLoading(true);
     setError('');
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/admin/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
+        `http://localhost:8000/api/v1/akadone/admin/lecturer/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -126,35 +111,9 @@ const Admin = () => {
     }
   };
 
-  const fetchDepartments = async () => {
-    try {
-      const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/combo/department?name=${encodeURIComponent(searchDepartment)}`,
-        {},
-        navigate
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setDepartments(data || []);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to fetch departments');
-      }
-    } catch (err) {
-      setError('Network error. Please try again later.');
-      console.error('Fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchUsers();
   }, [page, size, sortBy, sortOrder, debouncedSearch]);
-
-  useEffect(() => {
-    fetchDepartments();
-  }, [searchDepartment]);
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -186,8 +145,7 @@ const Admin = () => {
       noId: '',
       gender: '',
       permissions: [],
-      role: '',
-      managedDepartments: [],
+      specialization: '',
     });
   };
 
@@ -207,15 +165,14 @@ const Admin = () => {
       noId: user.noId || '',
       gender: user.gender || '',
       permissions: user.permissions || [],
-      role: user.role || '',
-      managedDepartments: user.managedDepartments || [],
+      specialization: user.specialization || [],
     });
   };
 
   const handleDeleteUser = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/admin/delete/${userToDelete}`,
+        `http://localhost:8000/api/v1/akadone/admin/lecturer/delete/${userToDelete}`,
         {
           method: 'DELETE',
           headers: {
@@ -257,20 +214,10 @@ const Admin = () => {
     }
   };
 
-  // Handle React Select for managedDepartments
-  const handleDepartmentChange = (selectedOptions) => {
-    const newDepartments = selectedOptions ? selectedOptions.map((option) => option.value) : [];
-    setFormData((prev) => ({
-      ...prev,
-      managedDepartments: newDepartments,
-    }));
-  };
-
   const validateForm = () => {
     if (!formData.username) return 'Username is required';
     if (!isEditMode && !formData.password) return 'Password is required';
     if (!formData.email) return 'Email is required';
-    if (!formData.role) return 'Role is required';
     return '';
   };
 
@@ -287,8 +234,8 @@ const Admin = () => {
 
     try {
       const url = isEditMode
-        ? `http://localhost:8000/api/v1/akadone/admin/admin/update/${currentUserId}`
-        : 'http://localhost:8000/api/v1/akadone/admin/admin/create';
+        ? `http://localhost:8000/api/v1/akadone/admin/lecturer/update/${currentUserId}`
+        : 'http://localhost:8000/api/v1/akadone/admin/lecturer/create';
       const method = isEditMode ? 'PUT' : 'POST';
       
       // Remove password from formData if empty in edit mode
@@ -333,7 +280,7 @@ const Admin = () => {
       <CRow>
         <CCol md={6}>
           <CFormInput
-            placeholder="Search by username"
+            placeholder="Search by name"
             value={search}
             onChange={handleSearchChange}
             className="mb-3"
@@ -341,7 +288,7 @@ const Admin = () => {
         </CCol>
         <CCol md={6} className="d-flex justify-content-end">
           <CButton color="primary" onClick={handleAddUser} className="mb-3">
-            Add User
+            Add Lecturer
           </CButton>
         </CCol>
       </CRow>
@@ -361,6 +308,9 @@ const Admin = () => {
                 <CTableHeaderCell onClick={() => handleSort('email')} style={{ cursor: 'pointer' }}>
                   Email {sortBy === 'email' && <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />}
                 </CTableHeaderCell>
+                <CTableHeaderCell onClick={() => handleSort('specialization')} style={{ cursor: 'pointer' }}>
+                  Specialization {sortBy === 'specialization' && <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />}
+                </CTableHeaderCell>
                 <CTableHeaderCell onClick={() => handleSort('lastLogin')} style={{ cursor: 'pointer' }}>
                   Last Login {sortBy === 'lastLogin' && <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />}
                 </CTableHeaderCell>
@@ -374,6 +324,7 @@ const Admin = () => {
                     <CTableDataCell>{index + 1 + (page - 1) * size}</CTableDataCell>
                     <CTableDataCell>{user.fullname}</CTableDataCell>
                     <CTableDataCell>{user.email}</CTableDataCell>
+                    <CTableDataCell>{user.specialization}</CTableDataCell>
                     <CTableDataCell>
                       {user.lastLogin
                         ? moment(user.lastLogin).utcOffset(14).format("dddd, MMMM Do YYYY, h:mm:ss a")
@@ -400,7 +351,7 @@ const Admin = () => {
                 ))
               ) : (
                 <CTableRow>
-                  <CTableDataCell colSpan="5" className="text-center">
+                  <CTableDataCell colSpan="6" className="text-center">
                     No users found
                   </CTableDataCell>
                 </CTableRow>
@@ -445,7 +396,7 @@ const Admin = () => {
       )}
       <CModal visible={modalVisible} onClose={() => setModalVisible(false)}>
         <CModalHeader>
-          <CModalTitle>{isEditMode ? 'Edit User' : 'Add New User'}</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit Lecturer' : 'Add New Lecturer'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm onSubmit={handleFormSubmit}>
@@ -548,7 +499,7 @@ const Admin = () => {
               </CCol>
             </CRow>
             <CRow>
-              <CCol md={6}>
+              <CCol md={12}>
                 <CFormLabel>Permissions</CFormLabel>
                 <Select
                   isMulti
@@ -560,32 +511,15 @@ const Admin = () => {
                   placeholder="Select permissions..."
                 />
               </CCol>
-              <CCol md={6}>
-                <CFormLabel>Role</CFormLabel>
-                <CFormSelect
-                  name="role"
-                  value={formData.role}
-                  onChange={(e) => handleFormChange(e)}
-                  required
-                  className="mb-3"
-                >
-                  <option value="">Select Role</option>
-                  <option value="Admin">Admin</option>
-                  <option value="User">User</option>
-                </CFormSelect>
-              </CCol>
             </CRow>
             <CRow>
               <CCol md={12}>
-                <CFormLabel>Managed Departments</CFormLabel>
-                <Select
-                  isMulti
-                  name="managedDepartments"
-                  options={departmentOptions}
-                  value={selectedDepartments}
-                  onChange={handleDepartmentChange}
+                <CFormLabel>Specialization</CFormLabel>
+                <CFormInput
+                  name="specialization"
+                  value={formData.specialization}
+                  onChange={(e) => handleFormChange(e)}
                   className="mb-3"
-                  placeholder="Select departments..."
                 />
               </CCol>
             </CRow>
@@ -620,4 +554,4 @@ const Admin = () => {
   );
 };
 
-export default Admin;
+export default Lecturer;

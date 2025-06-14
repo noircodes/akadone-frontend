@@ -6,6 +6,8 @@ const Typography = React.lazy(() => import('./views/theme/typography/Typography'
 
 // Users
 const Admin = React.lazy(() => import('./views/user/admin/Admin'))
+const Lecturer = React.lazy(() => import('./views/user/lecturer/Lecturer'))
+const Student = React.lazy(() => import('./views/user/student/Student'))
 
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
@@ -100,7 +102,9 @@ const routes = [
   { path: '/notifications/modals', name: 'Modals', element: Modals },
   { path: '/notifications/toasts', name: 'Toasts', element: Toasts },
   { path: '/widgets', name: 'Widgets', element: Widgets },
-  { path: '/user/admin', name: 'Admin', element: Admin}
+  { path: '/user/admin', name: 'Admin', element: Admin},
+  { path: '/user/lecturer', name: "Lecturer", element: Lecturer},
+  { path: '/user/student', name: "Student", element: Student}
 ]
 
 export default routes
