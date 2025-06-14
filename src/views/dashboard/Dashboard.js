@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import classNames from 'classnames'
 
 import {
@@ -175,6 +175,37 @@ const Dashboard = () => {
       activity: 'Last week',
     },
   ]
+
+  const checkToken = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetchWithAuth(
+        `http://localhost:8000/api/v1/akadone/auth/token-check`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        },
+        navigate
+      );
+      if (response.ok) {
+        const data = await response.json();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to fetch users');
+      }
+    } catch (err) {
+      setError('Network error. Please try again later.');
+      console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+   useEffect(() => {
+      checkToken();
+    }, []);
 
   return (
     <>
