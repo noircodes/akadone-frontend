@@ -28,7 +28,7 @@ import { useDebounce } from 'use-debounce';
 import { fetchWithAuth } from '../../../Api';
 import { useNavigate } from 'react-router-dom';
 import CIcon from '@coreui/icons-react';
-import { cilArrowBottom, cilArrowTop } from '@coreui/icons';
+import { cilArrowBottom, cilArrowTop, cilPencil, cilTrash } from '@coreui/icons';
 import Select from 'react-select';
 
 const Admin = () => {
@@ -45,6 +45,10 @@ const Admin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -169,6 +173,7 @@ const Admin = () => {
 
   const handleAddUser = () => {
     setModalVisible(true);
+    setIsEditMode(false);
     setFormError('');
     setFormSuccess('');
     setFormData({
@@ -184,6 +189,59 @@ const Admin = () => {
       role: '',
       managedDepartments: [],
     });
+  };
+
+  const handleEditUser = (user) => {
+    setModalVisible(true);
+    setIsEditMode(true);
+    setCurrentUserId(user._id);
+    setFormError('');
+    setFormSuccess('');
+    setFormData({
+      username: user.username || '',
+      password: '', // Password is not retrieved for security
+      fullname: user.fullname || '',
+      photoUrl: user.photoUrl || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      noId: user.noId || '',
+      gender: user.gender || '',
+      permissions: user.permissions || [],
+      role: user.role || '',
+      managedDepartments: user.managedDepartments || [],
+    });
+  };
+
+  const handleDeleteUser = async () => {
+    try {
+      const response = await fetchWithAuth(
+        `http://localhost:8000/api/v1/akadone/admin/admin/delete/${userToDelete}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        },
+        navigate
+      );
+      if (response.ok) {
+        setFormSuccess('User deleted successfully!');
+        setDeleteModalVisible(false);
+        setUserToDelete(null);
+        fetchUsers();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to delete user');
+      }
+    } catch (err) {
+      setError('Network error. Please try again later.');
+      console.error('Delete error:', err);
+    }
+  };
+
+  const handleOpenDeleteModal = (userId) => {
+    setUserToDelete(userId);
+    setDeleteModalVisible(true);
   };
 
   // Handle form changes for inputs and selects
@@ -210,7 +268,7 @@ const Admin = () => {
 
   const validateForm = () => {
     if (!formData.username) return 'Username is required';
-    if (!formData.password) return 'Password is required';
+    if (!isEditMode && !formData.password) return 'Password is required';
     if (!formData.email) return 'Email is required';
     if (!formData.role) return 'Role is required';
     return '';
@@ -228,23 +286,33 @@ const Admin = () => {
     }
 
     try {
+      const url = isEditMode
+        ? `http://localhost:8000/api/v1/akadone/admin/admin/update/${currentUserId}`
+        : 'http://localhost:8000/api/v1/akadone/admin/admin/create';
+      const method = isEditMode ? 'PUT' : 'POST';
+      
+      // Remove password from formData if empty in edit mode
+      const submitData = isEditMode && !formData.password 
+        ? { ...formData, password: undefined }
+        : formData;
+
       const response = await fetchWithAuth(
-        'http://localhost:8000/api/v1/akadone/admin/admin/create',
+        url,
         {
-          method: 'POST',
+          method,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(submitData),
         },
         navigate
       );
       if (response.ok) {
         const data = await response.json();
-        setFormSuccess(data.message || 'User created successfully!');
+        setFormSuccess(data.message || isEditMode ? 'User updated successfully!' : 'User created successfully!');
         setModalVisible(false);
         fetchUsers();
       } else {
         const errorData = await response.json();
-        setFormError(errorData.message || 'Failed to create user');
+        setFormError(errorData.message || isEditMode ? 'Failed to update user' : 'Failed to create user');
       }
     } catch (err) {
       if (err.message !== 'Unauthorized: Redirecting to login') {
@@ -278,6 +346,7 @@ const Admin = () => {
         </CCol>
       </CRow>
       {error && <CAlert color="danger">{error}</CAlert>}
+      {formSuccess && <CAlert color="success">{formSuccess}</CAlert>}
       {loading ? (
         <CAlert color="info">Loading...</CAlert>
       ) : (
@@ -295,6 +364,7 @@ const Admin = () => {
                 <CTableHeaderCell onClick={() => handleSort('lastLogin')} style={{ cursor: 'pointer' }}>
                   Last Login {sortBy === 'lastLogin' && <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />}
                 </CTableHeaderCell>
+                <CTableHeaderCell>Action</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
             <CTableBody>
@@ -309,11 +379,28 @@ const Admin = () => {
                         ? moment(user.lastLogin).utcOffset(14).format("dddd, MMMM Do YYYY, h:mm:ss a")
                         : ""}
                     </CTableDataCell>
+                    <CTableDataCell>
+                      <CButton
+                        color="warning"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleEditUser(user)}
+                      >
+                        <CIcon icon={cilPencil} /> Edit
+                      </CButton>
+                      <CButton
+                        color="danger"
+                        size="sm"
+                        onClick={() => handleOpenDeleteModal(user._id)}
+                      >
+                        <CIcon icon={cilTrash} /> Delete
+                      </CButton>
+                    </CTableDataCell>
                   </CTableRow>
                 ))
               ) : (
                 <CTableRow>
-                  <CTableDataCell colSpan="4" className="text-center">
+                  <CTableDataCell colSpan="5" className="text-center">
                     No users found
                   </CTableDataCell>
                 </CTableRow>
@@ -358,7 +445,7 @@ const Admin = () => {
       )}
       <CModal visible={modalVisible} onClose={() => setModalVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Add New User</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit User' : 'Add New User'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm onSubmit={handleFormSubmit}>
@@ -384,8 +471,9 @@ const Admin = () => {
                   name="password"
                   value={formData.password}
                   onChange={(e) => handleFormChange(e)}
-                  required
+                  required={!isEditMode}
                   className="mb-3"
+                  placeholder={isEditMode ? 'Leave blank to keep unchanged' : ''}
                 />
               </CCol>
             </CRow>
@@ -506,11 +594,27 @@ const Admin = () => {
                 Cancel
               </CButton>
               <CButton color="primary" type="submit">
-                Save
+                {isEditMode ? 'Update' : 'Save'}
               </CButton>
             </CModalFooter>
           </CForm>
         </CModalBody>
+      </CModal>
+      <CModal visible={deleteModalVisible} onClose={() => setDeleteModalVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>Confirm Delete</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          Are you sure you want to delete this user?
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setDeleteModalVisible(false)}>
+            Cancel
+          </CButton>
+          <CButton color="danger" onClick={handleDeleteUser}>
+            Delete
+          </CButton>
+        </CModalFooter>
       </CModal>
     </CContainer>
   );
