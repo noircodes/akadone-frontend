@@ -2,15 +2,19 @@ import React from 'react'
 import CIcon from '@coreui/icons-react'
 import {
   cilBell,
+  cilBuilding,
   cilCalculator,
   cilChartPie,
   cilCursor,
   cilDescription,
   cilDrop,
+  cilEducation,
   cilExternalLink,
   cilNotes,
   cilPencil,
+  cilPeople,
   cilPuzzle,
+  cilShieldAlt,
   cilSpeedometer,
   cilStar,
 } from '@coreui/icons'
@@ -37,18 +41,27 @@ const _nav = [
         component: CNavItem,
         name: 'Admin',
         to:'/user/admin',
+        icon: <CIcon icon={cilShieldAlt} customClassName="nav-icon" />
       },
       {
         component: CNavItem,
         name: 'Lecturer',
-        to: '/user/lecturer'
+        to: '/user/lecturer',
+        icon: <CIcon icon={cilEducation} customClassName="nav-icon" />
       },
       {
         component: CNavItem,
         name: 'Student',
-        to: '/user/student'
+        to: '/user/student',
+        icon: <CIcon icon={cilPeople} customClassName="nav-icon" />
       },
     ]
+  },
+  {
+    component: CNavItem,
+    name: 'Department',
+    to: '/department',
+    icon: <CIcon icon={cilBuilding} customClassName="nav-icon" />
   },
   {
     component: CNavTitle,
