@@ -16,6 +16,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
+import { getBaseUrl } from '../../../utils'
 
 const Login = () => {
   const [username, setUsername] = useState('')
@@ -23,6 +24,7 @@ const Login = () => {
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
   const navigate = useNavigate()
+  const baseUrl = getBaseUrl()
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -43,7 +45,7 @@ const Login = () => {
 
     try {
       // Using a mock API for testing; replace with your actual backend URL
-      const response = await fetch('http://localhost:8000/api/v1/akadone/auth/login', {
+      const response = await fetch(`${baseUrl}/api/v1/akadone/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

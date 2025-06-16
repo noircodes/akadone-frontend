@@ -31,6 +31,7 @@ import { useNavigate } from 'react-router-dom'
 import CIcon from '@coreui/icons-react'
 import { cilArrowBottom, cilArrowTop, cilPencil, cilTrash } from '@coreui/icons'
 import Select from 'react-select'
+import { getBaseUrl } from '../../utils'
 
 const Department = () => {
   const [departments, setDepartments] = useState([])
@@ -58,6 +59,7 @@ const Department = () => {
   })
   const [formError, setFormError] = useState('')
   const [formSuccess, setFormSuccess] = useState('')
+  const baseUrl = getBaseUrl()
 
   const navigate = useNavigate()
   const [debouncedSearch] = useDebounce(search, 500)
@@ -67,7 +69,7 @@ const Department = () => {
     setError('')
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/department/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
+        `${baseUrl}/api/v1/akadone/admin/department/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -96,7 +98,7 @@ const Department = () => {
   const fetchLecturers = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/combo/user?userType=ROLE_LECTURER&name=${encodeURIComponent(searchCourses)}`,
+        `${baseUrl}/api/v1/akadone/combo/user?userType=ROLE_LECTURER&name=${encodeURIComponent(searchCourses)}`,
         {},
         navigate,
       )
@@ -168,7 +170,7 @@ const Department = () => {
   const handleDeleteDepartment = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/department/delete/${departmentToDelete}`,
+        `${baseUrl}/api/v1/akadone/admin/department/delete/${departmentToDelete}`,
         {
           method: 'DELETE',
           headers: {
@@ -178,7 +180,7 @@ const Department = () => {
         navigate,
       )
       if (response.ok) {
-        setFormSuccess('User deleted successfully!')
+        setFormSuccess('Department deleted successfully!')
         setDeleteModalVisible(false)
         setDepartmentToDelete(null)
         fetchDepartments()
@@ -197,9 +199,7 @@ const Department = () => {
     setDeleteModalVisible(true)
   }
 
-  // Handle form changes for inputs and selects
   const handleFormChange = (e) => {
-    // Handle standard inputs and CFormSelect
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
@@ -209,14 +209,16 @@ const Department = () => {
     label: head.fullname,
   }));
 
-  // Handle React Select for managedDepartments
-  const handleHeadOptions = (e) => {
-    const { name, value } = e.target; // Extract name and value from the event
+  const selectedOption = headOptions.find(
+    (option) => option.value === formData.headId
+  ) || null;
+
+  const handleHeadOptions = (selectedOption) => {
     setFormData((prevData) => ({
-      ...prevData, // Spread previous state to maintain other fields
-      [name]: value, // Update the specific field (headId)
+      ...prevData,
+      headId: selectedOption.value, // Store the entire option object
     }));
-  }
+  };
 
   const validateForm = () => {
     if (!formData.name) return 'Name is required'
@@ -237,8 +239,8 @@ const Department = () => {
 
     try {
       const url = isEditMode
-        ? `http://localhost:8000/api/v1/akadone/admin/department/update/${currentDepartmentId}`
-        : 'http://localhost:8000/api/v1/akadone/admin/department/create'
+        ? `${baseUrl}/api/v1/akadone/admin/department/update/${currentDepartmentId}`
+        : '${baseUrl}/api/v1/akadone/admin/department/create'
       const method = isEditMode ? 'PUT' : 'POST'
 
       // Remove code from formData if empty in edit mode
@@ -256,7 +258,7 @@ const Department = () => {
       if (response.ok) {
         const data = await response.json()
         setFormSuccess(
-          data.message || isEditMode ? 'User updated successfully!' : 'User created successfully!',
+          data.message || isEditMode ? 'Department updated successfully!' : 'Department created successfully!',
         )
         setModalVisible(false)
         fetchDepartments()
@@ -455,14 +457,15 @@ const Department = () => {
             <CRow>
               <CCol md={12}>
                 <CFormLabel>Head</CFormLabel>
-                <CFormSelect
+                <Select
                   name="headId"
                   options={headOptions}
-                  value={formData.headId}
+                  value={selectedOption}
                   onChange={(e) => handleHeadOptions(e)}
                   className="mb-3"
+                  placeholder="Select head..."
                 >
-                </CFormSelect>
+                </Select>
               </CCol>
             </CRow>
             <CModalFooter>

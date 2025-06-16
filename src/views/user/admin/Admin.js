@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import CIcon from '@coreui/icons-react';
 import { cilArrowBottom, cilArrowTop, cilPencil, cilTrash } from '@coreui/icons';
 import Select from 'react-select';
+import { getBaseUrl } from '../../../utils';
 
 const Admin = () => {
   const [users, setUsers] = useState([]);
@@ -64,6 +65,7 @@ const Admin = () => {
   });
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const baseUrl = getBaseUrl()
 
   const navigate = useNavigate();
   const [debouncedSearch] = useDebounce(search, 500);
@@ -100,7 +102,7 @@ const Admin = () => {
     setError('');
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/admin/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
+        `${baseUrl}/api/v1/akadone/admin/admin/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -129,7 +131,7 @@ const Admin = () => {
   const fetchDepartments = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/combo/department?name=${encodeURIComponent(searchDepartment)}`,
+        `${baseUrl}/api/v1/akadone/combo/department?name=${encodeURIComponent(searchDepartment)}`,
         {},
         navigate
       );
@@ -215,7 +217,7 @@ const Admin = () => {
   const handleDeleteUser = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/admin/delete/${userToDelete}`,
+        `${baseUrl}/api/v1/akadone/admin/admin/delete/${userToDelete}`,
         {
           method: 'DELETE',
           headers: {
@@ -287,8 +289,8 @@ const Admin = () => {
 
     try {
       const url = isEditMode
-        ? `http://localhost:8000/api/v1/akadone/admin/admin/update/${currentUserId}`
-        : 'http://localhost:8000/api/v1/akadone/admin/admin/create';
+        ? `${baseUrl}/api/v1/akadone/admin/admin/update/${currentUserId}`
+        : '${baseUrl}/api/v1/akadone/admin/admin/create';
       const method = isEditMode ? 'PUT' : 'POST';
       
       // Remove password from formData if empty in edit mode

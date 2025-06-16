@@ -41,19 +41,19 @@ const _nav = [
         component: CNavItem,
         name: 'Admin',
         to:'/user/admin',
-        icon: <CIcon icon={cilShieldAlt} customClassName="nav-icon" />
+        icon: <CIcon icon={cilShieldAlt} customClassName="nav-icon" style={{marginLeft: '0px'}}/>
       },
       {
         component: CNavItem,
         name: 'Lecturer',
         to: '/user/lecturer',
-        icon: <CIcon icon={cilEducation} customClassName="nav-icon" />
+        icon: <CIcon icon={cilEducation} customClassName="nav-icon" style={{marginLeft: '0px'}}/>
       },
       {
         component: CNavItem,
         name: 'Student',
         to: '/user/student',
-        icon: <CIcon icon={cilPeople} customClassName="nav-icon" />
+        icon: <CIcon icon={cilPeople} customClassName="nav-icon" style={{marginLeft: '0px'}}/>
       },
     ]
   },

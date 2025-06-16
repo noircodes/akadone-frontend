@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import CIcon from '@coreui/icons-react';
 import { cilArrowBottom, cilArrowTop, cilPencil, cilTrash } from '@coreui/icons';
 import Select from 'react-select';
+import { getBaseUrl } from '../../../utils';
 
 const Lecturer = () => {
   const [users, setUsers] = useState([]);
@@ -63,6 +64,7 @@ const Lecturer = () => {
   });
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const baseUrl = getBaseUrl()
 
   const navigate = useNavigate();
   const [debouncedSearch] = useDebounce(search, 500);
@@ -85,7 +87,7 @@ const Lecturer = () => {
     setError('');
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/lecturer/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
+        `${baseUrl}/api/v1/akadone/admin/lecturer/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -172,7 +174,7 @@ const Lecturer = () => {
   const handleDeleteUser = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/admin/lecturer/delete/${userToDelete}`,
+        `${baseUrl}/api/v1/akadone/admin/lecturer/delete/${userToDelete}`,
         {
           method: 'DELETE',
           headers: {
@@ -234,8 +236,8 @@ const Lecturer = () => {
 
     try {
       const url = isEditMode
-        ? `http://localhost:8000/api/v1/akadone/admin/lecturer/update/${currentUserId}`
-        : 'http://localhost:8000/api/v1/akadone/admin/lecturer/create';
+        ? `${baseUrl}/api/v1/akadone/admin/lecturer/update/${currentUserId}`
+        : '${baseUrl}/api/v1/akadone/admin/lecturer/create';
       const method = isEditMode ? 'PUT' : 'POST';
       
       // Remove password from formData if empty in edit mode

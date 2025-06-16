@@ -53,6 +53,7 @@ import avatar6 from 'src/assets/images/avatars/6.jpg'
 import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
+import { getBaseUrl } from '../../utils'
 
 const Dashboard = () => {
   const progressExample = [
@@ -175,13 +176,14 @@ const Dashboard = () => {
       activity: 'Last week',
     },
   ]
+  const baseUrl = getBaseUrl()
 
   const checkToken = async () => {
     setLoading(true);
     setError('');
     try {
       const response = await fetchWithAuth(
-        `http://localhost:8000/api/v1/akadone/auth/token-check`,
+        `${baseUrl}/api/v1/akadone/auth/token-check`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
