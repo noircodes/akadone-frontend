@@ -22,47 +22,49 @@ import {
   CFormLabel,
   CFormSelect,
   CModalFooter,
+  CFormTextarea,
 } from '@coreui/react'
 import moment from 'moment'
 import { useDebounce } from 'use-debounce'
-import { fetchWithAuth } from '../../../Api'
+import { fetchWithAuth } from '../../Api'
 import { useNavigate } from 'react-router-dom'
 import CIcon from '@coreui/icons-react'
 import { cilArrowBottom, cilArrowTop, cilPencil, cilTrash } from '@coreui/icons'
 import Select from 'react-select'
-import { getBaseUrl } from '../../../utils'
+import { getBaseUrl } from '../../utils'
 
-const Student = () => {
-  const [users, setUsers] = useState([])
+const Course = () => {
+  const [courses, setCourses] = useState([])
   const [page, setPage] = useState(1)
   const [size, setSize] = useState(10)
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
-  const [sortBy, setSortBy] = useState('username')
+  const [sortBy, setSortBy] = useState('name')
   const [sortOrder, setSortOrder] = useState('asc')
   const [search, setSearch] = useState('')
-  const [courses, setCourses] = useState([])
-  const [searchCourses, setSearchCourses] = useState('')
+  const [lecturers, setLecturers] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [searchComboCourses, setSearchComboCourses] = useState('')
+  const [searchLecturers, setSearchLecturers] = useState('')
+  const [searchDepartments, setSearchDepartment] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [modalVisible, setModalVisible] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState(null)
+  const [currentDepartmentId, setCurrentDepartmentId] = useState(null)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
-  const [userToDelete, setUserToDelete] = useState(null)
+  const [courseToDelete, setCourseToDelete] = useState(null)
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    fullname: '',
-    photoUrl: '',
-    email: '',
-    phone: '',
-    noId: '',
-    gender: '',
-    permissions: [],
-    program: '',
-    yearEnrolled: 0,
-    enrolledCourses: [],
+    title: '',
+    code: '',
+    description: '',
+    departmentId: '',
+    prequisitesId: [],
+    lecturerId: '',
+    semester: '',
+    academicYear: 0,
+    schedule: '',
+    roomLocation: '',
   })
   const [formError, setFormError] = useState('')
   const [formSuccess, setFormSuccess] = useState('')
@@ -71,25 +73,12 @@ const Student = () => {
   const navigate = useNavigate()
   const [debouncedSearch] = useDebounce(search, 500)
 
-  // Available permissions for React Select
-  const permissionOptions = [
-    { value: 'read', label: 'Read' },
-    { value: 'write', label: 'Write' },
-    { value: 'admin', label: 'Admin' },
-  ]
-
-  // Transform formData.permissions for React Select
-  const selectedPermissions = formData.permissions.map((perm) => ({
-    value: perm,
-    label: perm.charAt(0).toUpperCase() + perm.slice(1),
-  }))
-
-  const fetchUsers = async () => {
+  const fetchCourses = async () => {
     setLoading(true)
     setError('')
     try {
       const response = await fetchWithAuth(
-        `${baseUrl}/api/v1/akadone/admin/student/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&name=${encodeURIComponent(search)}`,
+        `${baseUrl}/api/v1/akadone/admin/course/all?page=${page}&size=${size}&sortby=${sortBy}&order=${sortOrder}&title=${encodeURIComponent(search)}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -99,13 +88,13 @@ const Student = () => {
       )
       if (response.ok) {
         const data = await response.json()
-        setUsers(data.items || [])
+        setCourses(data.items || [])
         let totalPages = Math.ceil(data.total / size)
         setTotalPages(totalPages || 0)
         setTotalElements(data.total || 0)
       } else {
         const errorData = await response.json()
-        setError(errorData.message || 'Failed to fetch users')
+        setError(errorData.message || 'Failed to fetch courses')
       }
     } catch (err) {
       setError('Network error. Please try again later.')
@@ -115,19 +104,72 @@ const Student = () => {
     }
   }
 
-  const fetchCourses = async () => {
+  const fetchComboCourses = async () => {
+    setLoading(true)
+    setError('')
     try {
       const response = await fetchWithAuth(
-        `${baseUrl}/api/v1/akadone/combo/course?name=${encodeURIComponent(searchCourses)}`,
+        `${baseUrl}/api/v1/akadone/combo/course?name=${encodeURIComponent(searchComboCourses)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        },
+        navigate,
+      )
+      if (response.ok) {
+        const data = await response.json()
+        setCourses(data.items || [])
+        let totalPages = Math.ceil(data.total / size)
+        setTotalPages(totalPages || 0)
+        setTotalElements(data.total || 0)
+      } else {
+        const errorData = await response.json()
+        setError(errorData.message || 'Failed to fetch courses')
+      }
+    } catch (err) {
+      setError('Network error. Please try again later.')
+      console.error('Fetch error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchLecturers = async () => {
+    try {
+      const response = await fetchWithAuth(
+        `${baseUrl}/api/v1/akadone/combo/user?userType=ROLE_LECTURER&name=${encodeURIComponent(searchLecturers)}`,
         {},
         navigate,
       )
       if (response.ok) {
         const data = await response.json()
-        setCourses(data || [])
+        setLecturers(data || [])
       } else {
         const errorData = await response.json()
-        setError(errorData.message || 'Failed to fetch course')
+        setError(errorData.message || 'Failed to fetch user')
+      }
+    } catch (err) {
+      setError('Network error. Please try again later.')
+      console.error('Fetch error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetchWithAuth(
+        `${baseUrl}/api/v1/akadone/combo/department?name=${encodeURIComponent(searchDepartments)}`,
+        {},
+        navigate,
+      )
+      if (response.ok) {
+        const data = await response.json()
+        setDepartments(data || [])
+      } else {
+        const errorData = await response.json()
+        setError(errorData.message || 'Failed to fetch department')
       }
     } catch (err) {
       setError('Network error. Please try again later.')
@@ -138,12 +180,20 @@ const Student = () => {
   }
 
   useEffect(() => {
-    fetchUsers()
+    fetchCourses()
   }, [page, size, sortBy, sortOrder, debouncedSearch])
 
   useEffect(() => {
-    fetchCourses()
-  }, [searchCourses])
+    fetchComboCourses()
+  }, [searchComboCourses])
+
+  useEffect(() => {
+    fetchLecturers()
+  }, [searchLecturers])
+
+  useEffect(() => {
+    fetchDepartments()
+  }, [searchDepartments])
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -160,53 +210,49 @@ const Student = () => {
     setPage(1)
   }
 
-  const handleAddUser = () => {
+  const handleAddCourse = () => {
     setModalVisible(true)
     setIsEditMode(false)
     setFormError('')
     setFormSuccess('')
     setFormData({
-      username: '',
-      password: '',
-      fullname: '',
-      photoUrl: '',
-      email: '',
-      phone: '',
-      noId: '',
-      gender: '',
-      permissions: [],
-      program: '',
-      yearEnrolled: 0,
-      enrolledCourses: [],
+      title: '',
+      code: '',
+      description: '',
+      departmentId: '',
+      prequisitesId: [],
+      lecturerId: '',
+      semester: '',
+      academicYear: 0,
+      schedule: '',
+      roomLocation: '',
     })
   }
 
-  const handleEditUser = (user) => {
+  const handleEditCourse = (course) => {
     setModalVisible(true)
     setIsEditMode(true)
-    setCurrentUserId(user._id)
+    setCurrentDepartmentId(course._id)
     setFormError('')
     setFormSuccess('')
     setFormData({
-      username: user.username || '',
-      password: '', // Password is not retrieved for security
-      fullname: user.fullname || '',
-      photoUrl: user.photoUrl || '',
-      email: user.email || '',
-      phone: user.phone || '',
-      noId: user.noId || '',
-      gender: user.gender || '',
-      permissions: user.permissions || [],
-      program: user.program || '',
-      yearEnrolled: user.yearEnrolled || 0,
-      enrolledCourses: user.enrolledCourses || [],
+      title: course.title || '',
+      code: course.code || '',
+      description: course.description || '',
+      departmentId: course.departmentId || '',
+      prequisitesId: course.prequisitesId || [],
+      lecturerId: course.lecturerId || '',
+      semester: course.semester || '',
+      academicYear: course.academicYear || 0,
+      schedule: course.schedule || '',
+      roomLocation: course.roomLocation || '',
     })
   }
 
-  const handleDeleteUser = async () => {
+  const handlleDeleteCourse = async () => {
     try {
       const response = await fetchWithAuth(
-        `${baseUrl}/api/v1/akadone/admin/student/delete/${userToDelete}`,
+        `${baseUrl}/api/v1/akadone/admin/course/delete/${courseToDelete}`,
         {
           method: 'DELETE',
           headers: {
@@ -216,13 +262,13 @@ const Student = () => {
         navigate,
       )
       if (response.ok) {
-        setFormSuccess('User deleted successfully!')
+        setFormSuccess('Course deleted successfully!')
         setDeleteModalVisible(false)
-        setUserToDelete(null)
-        fetchUsers()
+        setCourseToDelete(null)
+        fetchCourses()
       } else {
         const errorData = await response.json()
-        setError(errorData.message || 'Failed to delete user')
+        setError(errorData.message || 'Failed to delete course')
       }
     } catch (err) {
       setError('Network error. Please try again later.')
@@ -231,48 +277,69 @@ const Student = () => {
   }
 
   const handleOpenDeleteModal = (userId) => {
-    setUserToDelete(userId)
+    setCourseToDelete(userId)
     setDeleteModalVisible(true)
   }
 
-  // Handle form changes for inputs and selects
-  const handleFormChange = (e, field) => {
-    if (field === 'permissions') {
-      // Handle React Select for permissions
-      const selected = e ? e.map((option) => option.value) : []
-      setFormData((prev) => ({ ...prev, permissions: selected }))
-    } else {
-      // Handle standard inputs and CFormSelect
-      const { name, value } = e.target
-      setFormData((prev) => ({ ...prev, [name]: value }))
-    }
+  const handleFormChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Handle React Select for managedDepartments
+  const lecturerOptions = lecturers.map((lecturer) => ({
+    value: lecturer._id,
+    label: lecturer.fullname,
+  }))
+
+  const selectedLecturerOption =
+    lecturerOptions.find((option) => option.value === formData.lecturerId) || null
+
+  const handleLecturerOptions = (selectedLecturerOption) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      lecturerId: selectedLecturerOption.value,
+    }))
+  }
+
+  const departmentOptions = departments.map((department) => ({
+    value: department._id,
+    label: department.name,
+  }))
+
+  const selectedDepartmentOption =
+    departmentOptions.find((option) => option.value === formData.departmentId) || null
+
+  const handleDepartmentOptions = (selectedDepartmentOption) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      departmentId: selectedDepartmentOption.value,
+    }))
+  }
+
   const handleCourseChange = (selectedOptions) => {
     const newCourses = selectedOptions ? selectedOptions.map((option) => option.value) : []
     setFormData((prev) => ({
       ...prev,
-      enrolledCourses: newCourses,
+      prequisitesId: newCourses,
     }))
   }
 
   const courseOptions = courses.map((course) => ({
     value: course._id,
     label: course.title,
-  }));
+  }))
 
-  const selectedCourses = formData.enrolledCourses.map((id) =>
-    courseOptions.find((option) => option.value === id) || {
-      value: id,
-      label: id,
-    }
-  );
+  const selectedCourses = formData.prequisitesId.map(
+    (id) =>
+      courseOptions.find((option) => option.value === id) || {
+        value: id,
+        label: id,
+      },
+  )
 
   const validateForm = () => {
-    if (!formData.username) return 'Username is required'
-    if (!isEditMode && !formData.password) return 'Password is required'
-    if (!formData.email) return 'Email is required'
+    if (!formData.title) return 'Title is required'
+    if (!formData.code) return 'Code is required'
     return ''
   }
 
@@ -289,13 +356,12 @@ const Student = () => {
 
     try {
       const url = isEditMode
-        ? `${baseUrl}/api/v1/akadone/admin/student/update/${currentUserId}`
-        : `${baseUrl}/api/v1/akadone/admin/student/create`
+        ? `${baseUrl}/api/v1/akadone/admin/course/update/${currentDepartmentId}`
+        : `${baseUrl}/api/v1/akadone/admin/course/create`
       const method = isEditMode ? 'PUT' : 'POST'
 
-      // Remove password from formData if empty in edit mode
-      const submitData =
-        isEditMode && !formData.password ? { ...formData, password: undefined } : formData
+      // Remove code from formData if empty in edit mode
+      const submitData = isEditMode && !formData.code ? { ...formData, code: undefined } : formData
 
       const response = await fetchWithAuth(
         url,
@@ -309,14 +375,16 @@ const Student = () => {
       if (response.ok) {
         const data = await response.json()
         setFormSuccess(
-          data.message || isEditMode ? 'User updated successfully!' : 'User created successfully!',
+          data.message || isEditMode
+            ? 'Course updated successfully!'
+            : 'Course created successfully!',
         )
         setModalVisible(false)
-        fetchUsers()
+        fetchCourses()
       } else {
         const errorData = await response.json()
         setFormError(
-          errorData.message || isEditMode ? 'Failed to update user' : 'Failed to create user',
+          errorData.message || isEditMode ? 'Failed to update course' : 'Failed to create course',
         )
       }
     } catch (err) {
@@ -345,8 +413,8 @@ const Student = () => {
           />
         </CCol>
         <CCol md={6} className="d-flex justify-content-end">
-          <CButton color="primary" onClick={handleAddUser} className="mb-3">
-            Add Student
+          <CButton color="primary" onClick={handleAddCourse} className="mb-3">
+            Add Course
           </CButton>
         </CCol>
       </CRow>
@@ -360,36 +428,42 @@ const Student = () => {
             <CTableHead>
               <CTableRow>
                 <CTableHeaderCell>ID</CTableHeaderCell>
-                <CTableHeaderCell
-                  onClick={() => handleSort('fullname')}
-                  style={{ cursor: 'pointer' }}
-                >
-                  Fullname{' '}
-                  {sortBy === 'fullname' && (
+                <CTableHeaderCell onClick={() => handleSort('title')} style={{ cursor: 'pointer' }}>
+                  Name{' '}
+                  {sortBy === 'title' && (
                     <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
                   )}
                 </CTableHeaderCell>
-                <CTableHeaderCell onClick={() => handleSort('email')} style={{ cursor: 'pointer' }}>
-                  Email{' '}
-                  {sortBy === 'email' && (
-                    <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
-                  )}
-                </CTableHeaderCell>
-                <CTableHeaderCell
-                  onClick={() => handleSort('specialization')}
-                  style={{ cursor: 'pointer' }}
-                >
-                  Program{' '}
-                  {sortBy === 'program' && (
+                <CTableHeaderCell onClick={() => handleSort('code')} style={{ cursor: 'pointer' }}>
+                  Code{' '}
+                  {sortBy === 'code' && (
                     <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
                   )}
                 </CTableHeaderCell>
                 <CTableHeaderCell
-                  onClick={() => handleSort('lastLogin')}
+                  onClick={() => handleSort('description')}
                   style={{ cursor: 'pointer' }}
                 >
-                  Last Login{' '}
-                  {sortBy === 'lastLogin' && (
+                  Description{' '}
+                  {sortBy === 'description' && (
+                    <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
+                  )}
+                </CTableHeaderCell>
+                <CTableHeaderCell
+                  onClick={() => handleSort('credits')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  SKS{' '}
+                  {sortBy === 'credits' && (
+                    <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
+                  )}
+                </CTableHeaderCell>
+                <CTableHeaderCell
+                  onClick={() => handleSort('roomLocation')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Room{' '}
+                  {sortBy === 'roomLocation' && (
                     <CIcon icon={sortOrder === 'asc' ? cilArrowTop : cilArrowBottom} />
                   )}
                 </CTableHeaderCell>
@@ -397,33 +471,28 @@ const Student = () => {
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {users.length > 0 ? (
-                users.map((user, index) => (
-                  <CTableRow key={user._id}>
+              {courses.length > 0 ? (
+                courses.map((course, index) => (
+                  <CTableRow key={course._id}>
                     <CTableDataCell>{index + 1 + (page - 1) * size}</CTableDataCell>
-                    <CTableDataCell>{user.fullname}</CTableDataCell>
-                    <CTableDataCell>{user.email}</CTableDataCell>
-                    <CTableDataCell>{user.program}</CTableDataCell>
-                    <CTableDataCell>
-                      {user.lastLogin
-                        ? moment(user.lastLogin)
-                            .utcOffset(14)
-                            .format('dddd, MMMM Do YYYY, h:mm:ss a')
-                        : ''}
-                    </CTableDataCell>
+                    <CTableDataCell>{course.title}</CTableDataCell>
+                    <CTableDataCell>{course.code}</CTableDataCell>
+                    <CTableDataCell>{course.description}</CTableDataCell>
+                    <CTableDataCell>{course.credits}</CTableDataCell>
+                    <CTableDataCell>{course.roomLocation}</CTableDataCell>
                     <CTableDataCell>
                       <CButton
                         color="warning"
                         size="sm"
                         className="me-2"
-                        onClick={() => handleEditUser(user)}
+                        onClick={() => handleEditCourse(course)}
                       >
                         <CIcon icon={cilPencil} /> Edit
                       </CButton>
                       <CButton
                         color="danger"
                         size="sm"
-                        onClick={() => handleOpenDeleteModal(user._id)}
+                        onClick={() => handleOpenDeleteModal(course._id)}
                       >
                         <CIcon icon={cilTrash} /> Delete
                       </CButton>
@@ -433,7 +502,7 @@ const Student = () => {
               ) : (
                 <CTableRow>
                   <CTableDataCell colSpan="6" className="text-center">
-                    No users found
+                    No courses found
                   </CTableDataCell>
                 </CTableRow>
               )}
@@ -471,13 +540,13 @@ const Student = () => {
             </CPagination>
           )}
           <p className="text-center mt-2">
-            Showing {users.length} of {totalElements} users
+            Showing {courses.length} of {totalElements} courses
           </p>
         </>
       )}
       <CModal visible={modalVisible} onClose={() => setModalVisible(false)}>
         <CModalHeader>
-          <CModalTitle>{isEditMode ? 'Edit Student' : 'Add New Student'}</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit Course' : 'Add New Course'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm onSubmit={handleFormSubmit}>
@@ -485,10 +554,10 @@ const Student = () => {
             {formSuccess && <CAlert color="success">{formSuccess}</CAlert>}
             <CRow>
               <CCol md={12}>
-                <CFormLabel>Username</CFormLabel>
+                <CFormLabel>Name</CFormLabel>
                 <CFormInput
-                  name="username"
-                  value={formData.username}
+                  name="title"
+                  value={formData.title}
                   onChange={(e) => handleFormChange(e)}
                   required
                   className="mb-3"
@@ -497,47 +566,11 @@ const Student = () => {
             </CRow>
             <CRow>
               <CCol md={12}>
-                <CFormLabel>Password</CFormLabel>
+                <CFormLabel>Code</CFormLabel>
                 <CFormInput
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={(e) => handleFormChange(e)}
-                  required={!isEditMode}
-                  className="mb-3"
-                  placeholder={isEditMode ? 'Leave blank to keep unchanged' : ''}
-                />
-              </CCol>
-            </CRow>
-            <CRow>
-              <CCol md={12}>
-                <CFormLabel>Full Name</CFormLabel>
-                <CFormInput
-                  name="fullname"
-                  value={formData.fullname}
-                  onChange={(e) => handleFormChange(e)}
-                  className="mb-3"
-                />
-              </CCol>
-            </CRow>
-            <CRow>
-              <CCol md={12}>
-                <CFormLabel>Photo URL</CFormLabel>
-                <CFormInput
-                  name="photoUrl"
-                  value={formData.photoUrl}
-                  onChange={(e) => handleFormChange(e)}
-                  className="mb-3"
-                />
-              </CCol>
-            </CRow>
-            <CRow>
-              <CCol md={12}>
-                <CFormLabel>Email</CFormLabel>
-                <CFormInput
-                  type="email"
-                  name="email"
-                  value={formData.email}
+                  type="code"
+                  name="code"
+                  value={formData.code}
                   onChange={(e) => handleFormChange(e)}
                   required
                   className="mb-3"
@@ -546,85 +579,114 @@ const Student = () => {
             </CRow>
             <CRow>
               <CCol md={12}>
-                <CFormLabel>Phone</CFormLabel>
-                <CFormInput
-                  name="phone"
-                  value={formData.phone}
+                <CFormLabel>Description</CFormLabel>
+                <CFormTextarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
                   onChange={(e) => handleFormChange(e)}
+                  rows={3}
                   className="mb-3"
                 />
-              </CCol>
-            </CRow>
-            <CRow>
-              <CCol md={6}>
-                <CFormLabel>ID Number</CFormLabel>
-                <CFormInput
-                  name="noId"
-                  value={formData.noId}
-                  onChange={(e) => handleFormChange(e)}
-                  className="mb-3"
-                />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Gender</CFormLabel>
-                <CFormSelect
-                  name="gender"
-                  value={formData.gender}
-                  onChange={(e) => handleFormChange(e)}
-                  className="mb-3"
-                >
-                  <option value="">Select Gender</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                </CFormSelect>
               </CCol>
             </CRow>
             <CRow>
               <CCol md={12}>
-                <CFormLabel>Permissions</CFormLabel>
-                <Select
-                  isMulti
-                  name="permissions"
-                  options={permissionOptions}
-                  value={selectedPermissions}
-                  onChange={(selectedOptions) => handleFormChange(selectedOptions, 'permissions')}
-                  className="mb-3"
-                  placeholder="Select permissions..."
-                />
-              </CCol>
-            </CRow>
-            <CRow>
-              <CCol md={6}>
-                <CFormLabel>Program</CFormLabel>
-                <CFormInput
-                  name="program"
-                  value={formData.program}
-                  onChange={(e) => handleFormChange(e)}
-                  className="mb-3"
-                />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Year Enrolled</CFormLabel>
+                <CFormLabel>SKS</CFormLabel>
                 <CFormInput
                   type="number"
-                  name="yearEnrolled"
-                  value={formData.yearEnrolled}
+                  name="credits"
+                  value={formData.credits}
                   onChange={(e) => handleFormChange(e)}
+                  required
                   className="mb-3"
                 />
               </CCol>
             </CRow>
             <CRow>
               <CCol md={12}>
-                <CFormLabel>Enrolled Courses</CFormLabel>
+                <CFormLabel>Department</CFormLabel>
+                <Select
+                  name="departmentId"
+                  options={departmentOptions}
+                  value={selectedDepartmentOption}
+                  onChange={(e) => handleDepartmentOptions(e)}
+                  className="mb-3"
+                  placeholder="Select department..."
+                ></Select>
+              </CCol>
+            </CRow>
+            <CRow>
+              <CCol md={12}>
+                <CFormLabel>Lecturer</CFormLabel>
+                <Select
+                  name="lecturerId"
+                  options={lecturerOptions}
+                  value={selectedLecturerOption}
+                  onChange={(e) => handleLecturerOptions(e)}
+                  className="mb-3"
+                  placeholder="Select lecturer..."
+                ></Select>
+              </CCol>
+            </CRow>
+            <CRow>
+              <CCol md={12}>
+                <CFormLabel>Prequisites Courses</CFormLabel>
                 <Select
                   isMulti
-                  name="enrolledCourses"
+                  name="prequisitesId"
                   options={courseOptions}
                   value={selectedCourses}
                   onChange={handleCourseChange}
                   className="mb-3"
-                  placeholder="Select permissions..."
+                  placeholder="Select courses..."
+                />
+              </CCol>
+            </CRow>
+            <CRow>
+              <CCol md={6}>
+                <CFormLabel>Semester</CFormLabel>
+                <CFormInput
+                  name="semester"
+                  value={formData.semester}
+                  onChange={(e) => handleFormChange(e)}
+                  required
+                  className="mb-3"
+                />
+              </CCol>
+              <CCol md={6}>
+                <CFormLabel>Academic Year</CFormLabel>
+                <CFormInput
+                  type="number"
+                  name="academicYear"
+                  value={formData.academicYear}
+                  onChange={(e) => handleFormChange(e)}
+                  required
+                  className="mb-3"
+                />
+              </CCol>
+            </CRow>
+            <CRow>
+              <CCol md={12}>
+                <CFormLabel>Schedule</CFormLabel>
+                <CFormInput
+                  name="schedule"
+                  value={formData.schedule}
+                  onChange={(e) => handleFormChange(e)}
+                  required
+                  className="mb-3"
+                />
+              </CCol>
+            </CRow>
+            <CRow>
+              <CCol md={12}>
+                <CFormLabel>Room</CFormLabel>
+                <CFormInput
+                  name="roomLocation"
+                  value={formData.roomLocation}
+                  onChange={(e) => handleFormChange(e)}
+                  required
+                  className="mb-3"
                 />
               </CCol>
             </CRow>
@@ -643,12 +705,12 @@ const Student = () => {
         <CModalHeader>
           <CModalTitle>Confirm Delete</CModalTitle>
         </CModalHeader>
-        <CModalBody>Are you sure you want to delete this user?</CModalBody>
+        <CModalBody>Are you sure you want to delete this course?</CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setDeleteModalVisible(false)}>
             Cancel
           </CButton>
-          <CButton color="danger" onClick={handleDeleteUser}>
+          <CButton color="danger" onClick={handlleDeleteCourse}>
             Delete
           </CButton>
         </CModalFooter>
@@ -657,4 +719,4 @@ const Student = () => {
   )
 }
 
-export default Student
+export default Course

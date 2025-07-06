@@ -290,7 +290,7 @@ const Admin = () => {
     try {
       const url = isEditMode
         ? `${baseUrl}/api/v1/akadone/admin/admin/update/${currentUserId}`
-        : '${baseUrl}/api/v1/akadone/admin/admin/create';
+        : `${baseUrl}/api/v1/akadone/admin/admin/create`;
       const method = isEditMode ? 'PUT' : 'POST';
       
       // Remove password from formData if empty in edit mode

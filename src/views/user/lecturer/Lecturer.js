@@ -237,7 +237,7 @@ const Lecturer = () => {
     try {
       const url = isEditMode
         ? `${baseUrl}/api/v1/akadone/admin/lecturer/update/${currentUserId}`
-        : '${baseUrl}/api/v1/akadone/admin/lecturer/create';
+        : `${baseUrl}/api/v1/akadone/admin/lecturer/create`;
       const method = isEditMode ? 'PUT' : 'POST';
       
       // Remove password from formData if empty in edit mode

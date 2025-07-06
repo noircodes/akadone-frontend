@@ -12,6 +12,9 @@ const Student = React.lazy(() => import('./views/user/student/Student'))
 // Departments
 const Department = React.lazy(() => import('./views/department/Department'))
 
+// Courses
+const Course = React.lazy(() => import('./views/course/Course'))
+
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
 const Breadcrumbs = React.lazy(() => import('./views/base/breadcrumbs/Breadcrumbs'))
@@ -108,7 +111,8 @@ const routes = [
   { path: '/user/admin', name: 'Admin', element: Admin},
   { path: '/user/lecturer', name: "Lecturer", element: Lecturer},
   { path: '/user/student', name: "Student", element: Student},
-  { path: '/department', name: "Department", element: Department}
+  { path: '/department', name: "Department", element: Department},
+  { path: '/course', name: "Course", element: Course}
 ]
 
 export default routes

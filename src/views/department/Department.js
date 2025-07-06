@@ -240,7 +240,7 @@ const Department = () => {
     try {
       const url = isEditMode
         ? `${baseUrl}/api/v1/akadone/admin/department/update/${currentDepartmentId}`
-        : '${baseUrl}/api/v1/akadone/admin/department/create'
+        : `${baseUrl}/api/v1/akadone/admin/department/create`
       const method = isEditMode ? 'PUT' : 'POST'
 
       // Remove code from formData if empty in edit mode
